@@ -1,2 +1,1242 @@
 # Multi Tool
-Multi Tool
+Mult<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Tool Vault App</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: bold;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #2e1065 50%, #0369a1 100%);
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-attachment: fixed;
+            overflow-y: scroll; /* Fixes horizontal shake from scrollbar appearing */
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            position: relative;
+            /* Prevents flickering during smooth height transform */
+            will-change: height; 
+        }
+
+        /* Stable Neon Title */
+        .neon-box {
+            padding: 20px 40px;
+            border: 2px solid #ff007f;
+            border-radius: 15px;
+            background-color: rgba(255, 0, 127, 0.1);
+            box-shadow: 0 0 10px #ff007f,
+                        0 0 20px #ff007f,
+                        inset 0 0 10px #ff007f;
+            margin-bottom: 5px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .neon-text {
+            color: #fff;
+            font-size: 2.2rem;
+            letter-spacing: 4px;
+            margin: 0;
+            text-align: center;
+            text-shadow: 0 0 5px #fff,
+                         0 0 10px #fff,
+                         0 0 20px #ff007f,
+                         0 0 40px #ff007f;
+            /* Added smooth, fast animation for text transitions */
+            transition: opacity 0.15s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: inline-block; 
+            will-change: opacity, transform;
+        }
+
+        /* New Smooth Tool Navigation Menu System */
+        .tool-nav-menu {
+            width: 100%;
+            display: flex;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 6px;
+            gap: 5px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-item-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            border-radius: 25px;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-item-btn:hover {
+            color: #f8fafc;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item-btn.active-tool-tab {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+
+        /* Internal Sub-mode switch button */
+        .mode-toggle-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(56, 189, 248, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 50px;
+            color: #38bdf8;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.25s ease;
+        }
+        .mode-toggle-btn:hover {
+            background: rgba(56, 189, 248, 0.25);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+        .mode-toggle-btn:active { transform: scale(0.97); }
+
+        /* Master visibility containers */
+        .master-tool-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+        }
+
+        /* Global Structural classes mapped uniformly */
+        .mode-container, .panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Shared glasspanel layouts */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            width: 100%;
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Form elements shared cleanly */
+        .input-group { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-bottom: 15px; }
+        .input-group label { font-size: 1.1rem; color: #e2e8f0; margin-left: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .input-field {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #f8fafc;
+            font-size: 1.3rem;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative;
+            z-index: 2;
+        }
+        .input-field:focus {
+            border-color: #38bdf8;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        textarea.input-field { text-align: left; font-size: 1.1rem; resize: vertical; min-height: 80px; }
+        input[type="file"].input-field { padding: 10px; cursor: pointer; }
+
+        /* ================= DUSTBIN / DELETE ANIMATION STYLES ================= */
+        .delete-file-btn {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #ef4444;
+            padding: 0 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .delete-file-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #f8fafc;
+            border-color: #ef4444;
+        }
+
+        .delete-file-btn svg {
+            overflow: visible; /* Allows paper to start outside the bin boundaries */
+        }
+
+        .dustbin-lid {
+            transform-origin: 20px 6px; /* Hinge location dynamically mapping to right-edge */
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .dustbin-paper {
+            opacity: 0;
+            transform: translateY(-12px) scale(0);
+        }
+
+        /* 1. Subtle Hover State */
+        .delete-file-btn:hover .dustbin-lid {
+            transform: rotate(25deg) translate(1px, -2px);
+        }
+
+        /* 2. Full Dumping Sequence Classes applied via JS */
+        .delete-file-btn.is-dumping .dustbin-lid {
+            animation: snapLid 0.6s forwards;
+        }
+
+        .delete-file-btn.is-dumping .dustbin-paper {
+            animation: tossPaper 0.6s forwards;
+        }
+
+        .delete-file-btn.is-dumping {
+            animation: btnBump 0.6s forwards;
+        }
+
+        /* 3. Empty Shake Class (If user clicks delete while no file is selected) */
+        .delete-file-btn.is-empty-shake {
+            animation: emptyShake 0.3s forwards;
+        }
+
+        /* Keyframes for the dump logic */
+        @keyframes snapLid {
+            0%   { transform: rotate(25deg) translate(1px, -2px); }
+            20%  { transform: rotate(45deg) translate(2px, -3px); }
+            70%  { transform: rotate(0deg) translate(0px, 0px); }
+            100% { transform: rotate(0deg) translate(0px, 0px); }
+        }
+
+        @keyframes tossPaper {
+            0%   { opacity: 0; transform: translateY(-14px) scale(0.5); }
+            20%  { opacity: 1; transform: translateY(-8px) scale(0.8); }
+            60%  { opacity: 0; transform: translateY(6px) scale(0); }
+            100% { opacity: 0; transform: translateY(6px) scale(0); }
+        }
+
+        @keyframes btnBump {
+            0%, 100% { transform: scale(1.05); }
+            30% { transform: scale(1.1); }
+            70% { transform: scale(0.95); }
+        }
+
+        @keyframes emptyShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        /* =================================================================== */
+
+        /* ===== SHOW PASSWORD ANIMATION STYLES ===== */
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+        
+        .password-wrapper .input-field {
+            padding-right: 45px;
+            padding-left: 45px; 
+        }
+
+        .toggle-password-btn {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3;
+            transition: color 0.3s ease, transform 0.2s ease;
+            outline: none;
+        }
+
+        .toggle-password-btn:hover {
+            color: #38bdf8;
+            transform: scale(1.1);
+        }
+
+        .toggle-password-btn:active {
+            transform: scale(0.9);
+        }
+
+        .eye-slash {
+            stroke-dasharray: 30;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .toggle-password-btn.password-visible .eye-slash {
+            stroke-dashoffset: 30;
+        }
+        /* ========================================= */
+
+        /* Shared Glow mechanics */
+        .glow-on-hover {
+            border: none;
+            outline: none;
+            color: #fff;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            z-index: 0;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            user-select: none;
+            transition: transform 0.1s;
+            width: 100%;
+            padding: 14px;
+        }
+        .glow-on-hover:before {
+            content: '';
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            background-size: 400%;
+            z-index: -1;
+            filter: blur(5px);
+            width: calc(100% + 4px);
+            height: calc(100% + 4px);
+            animation: glowing 20s linear infinite;
+            opacity: 0;
+            transition: opacity .3s ease-in-out;
+            border-radius: 50px;
+        }
+        .glow-on-hover:active { transform: scale(0.96); }
+        .glow-on-hover:hover:before { opacity: 1; }
+        .glow-on-hover:after {
+            z-index: -1;
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #0f172a;
+            left: 0;
+            top: 0;
+            border-radius: 50px;
+        }
+        @keyframes glowing {
+            0% { background-position: 0 0; }
+            50% { background-position: 400% 0; }
+            100% { background-position: 0 0; }
+        }
+
+        /* Capsules and Utilities */
+        .answer-capsule {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 50px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+            max-height: 0;
+            padding: 0 12px;
+            margin-top: 0;
+            opacity: 0;
+            overflow: hidden;
+            border: 1px solid transparent;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .answer-capsule.show {
+            max-height: 80px;
+            padding: 12px;
+            margin-top: 20px;
+            opacity: 1;
+        }
+
+        .green-text { color: #32cd32; border-color: #32cd32; filter: drop-shadow(0 0 1rem rgba(50,205,50,0.4)); }
+        .red-text { color: #ef4444; border-color: #ef4444; }
+        .caution-pill {
+            width: 90%;
+            background: rgba(239, 68, 68, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #fca5a5;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.1);
+            margin-top: 5px;
+        }
+
+        /* Unique Calculator rules */
+        #calculatorMode .instruction-box { text-align: center; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; }
+        #calculatorMode .calculator-card { position: relative; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        #calculatorMode .calculator-card::before {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0;
+            transition: all 0.3s ease-in-out; border-top: 2px solid rgba(56, 189, 248, 0.8); border-bottom: 2px solid rgba(56, 189, 248, 0.8);
+            transform: scale(0.1, 1); border-radius: 16px; pointer-events: none;
+        }
+        #calculatorMode .calculator-card:hover::before { opacity: 1; transform: scale(1, 1); }
+        #calculatorMode .glow-on-hover { width: 80%; }
+
+        /* Unique Morse rules */
+        #morseMode .sliders-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; margin-bottom: 15px; }
+        #morseMode .slider-wrapper { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.9rem; }
+        #morseMode input[type=range] { width: 100%; accent-color: #38bdf8; cursor: pointer; }
+        #morseMode .controls-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        #morseMode .glass-btn {
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff; padding: 10px 15px; border-radius: 8px; cursor: pointer;
+            transition: all 0.2s; flex-grow: 1; text-align: center; font-size: 0.9rem;
+        }
+        #morseMode .glass-btn:hover { background: rgba(56, 189, 248, 0.3); border-color: #38bdf8; }
+        #morseMode .glass-btn:active { transform: scale(0.95); }
+        #morseMode .glass-btn.active-toggle { border-color: #ffe81e; color: #ffe81e; background: rgba(255, 232, 30, 0.15); }
+        #morseMode .glow-on-hover { margin-top: 10px; }
+
+        /* Modals rules */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); z-index: 1000;
+            justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s;
+        }
+        .modal-overlay.show { display: flex; opacity: 1; }
+        .modal-box {
+            background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); border-radius: 16px;
+            padding: 25px; width: 90%; max-width: 320px;
+            display: none; flex-direction: column; gap: 12px; text-align: center;
+            transform: scale(0.9); transition: transform 0.2s;
+        }
+        .modal-box.active { display: flex; transform: scale(1); }
+        .modal-box h3 { margin: 0 0 10px 0; color: #38bdf8; font-size: 1.4rem; }
+        .modal-box .close-btn { background: transparent; border: none; color: #94a3b8; font-size: 1rem; cursor: pointer; margin-top: 10px; transition: color 0.2s; }
+        .modal-box .close-btn:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="neon-box">
+        <div class="neon-text" id="masterAppTitle">Calculator</div>
+    </div>
+
+    <div class="tool-nav-menu">
+        <button class="nav-item-btn active-tool-tab" id="tab-calc" onclick="switchMainTool('calc')">🧮 Calc</button>
+        <button class="nav-item-btn" id="tab-morse" onclick="switchMainTool('morse')">📟 Morse</button>
+        <button class="nav-item-btn" id="tab-vault" onclick="switchMainTool('vault')">🔒 Vault</button>
+    </div>
+
+    <div id="calcToolPanel" class="master-tool-panel">
+        <div id="calculatorMode" class="mode-container">
+            <div class="instruction-box glass-panel">
+                Type your math problem (e.g., (3*8){7*8}).<br>
+                Brackets (), {}, [] and implicit multiplication are supported.
+            </div>
+            <div style="width: 100%;">
+                <div class="calculator-card glass-panel">
+                    <div style="display: flex; gap: 8px; width: 100%;">
+                        <input type="text" id="equationInput" class="input-field" placeholder="Enter equation..." autocomplete="off">
+                        <button type="button" class="delete-file-btn" onclick="clearEquation(this)" title="Clear Equation">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+                                <rect class="dustbin-paper" x="10" y="0" width="4" height="6" rx="1" fill="currentColor" />
+                                <path class="dustbin-body" d="M6,7V19C6,20.1 6.9,21 8,21H16C17.1,21 18,20.1 18,19V7H6ZM10,17H8V9H10V17ZM16,17H14V9H16V17Z" />
+                                <path class="dustbin-lid" d="M15,4V3H9V4H4V6H20V4H15Z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="answerBox" class="answer-capsule"></div>
+                </div>
+            </div>
+            <button class="glow-on-hover" type="button" onclick="executeCalculation()">Enter</button>
+            <div class="caution-pill">
+                ⚠️Do not enter alphabetical text or invalid symbols.
+            </div>
+        </div>
+    </div>
+
+    <div id="morseToolPanel" class="master-tool-panel hidden">
+        <div id="morseMode" class="mode-container">
+            <div class="glass-panel">
+                <div class="input-group">
+                    <label for="textInput">Input:</label>
+                    <textarea id="textInput" class="input-field" placeholder="Type text here..." oninput="translateToMorse()"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="morseOutput">Output:</label>
+                    <textarea id="morseOutput" class="input-field green-text" placeholder="Morse code will appear here..." oninput="translateToText()"></textarea>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <div class="sliders-container">
+                    <div class="slider-wrapper">
+                        <label id="speedLabel">Speed (20)</label>
+                        <input type="range" id="speed" min="5" max="50" value="20" oninput="updateSliders()">
+                    </div>
+                    <div class="slider-wrapper">
+                        <label id="pitchLabel">Pitch (425)</label>
+                        <input type="range" id="pitch" min="100" max="1000" value="425" oninput="updateSliders()">
+                    </div>
+                    <div class="slider-wrapper">
+                        <label id="volumeLabel">Volume (55)</label>
+                        <input type="range" id="volume" min="0" max="100" value="55" oninput="updateSliders()">
+                    </div>
+                </div>
+
+                <div class="controls-grid">
+                    <button class="glass-btn" onclick="pauseMorse()">⏸ Pause</button>
+                    <button class="glass-btn" onclick="stopMorse()">⏹ Stop</button>
+                    <button class="glass-btn" id="btnRepeat" onclick="toggleBtn('btnRepeat', 'isRepeating')">🔁 Repeat</button>
+                    <button class="glass-btn active-toggle" id="btnSound" onclick="toggleBtn('btnSound', 'isSoundOn')">🎵 Sound</button>
+                    <button class="glass-btn" id="btnVibrate" onclick="toggleBtn('btnVibrate', 'isVibrateOn')">📳 Vibrate</button>
+                    <button class="glass-btn" onclick="openModal('saveModal')">💾 Save</button>
+                    <button class="glass-btn" onclick="openModal('shareModal')">📤 Send</button>
+                </div>
+
+                <button class="glow-on-hover" type="button" onclick="playMorse()">▶ Play</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="vaultToolPanel" class="master-tool-panel hidden">
+        <button class="mode-toggle-btn" id="vaultTabSwitchBtn" type="button" onclick="switchVaultTab()">🔄 Switch to Decrypt Mode</button>
+
+        <div id="encryptPanel" class="panel">
+            <div class="glass-panel">
+                <div class="input-group">
+                    <label for="encFileInput">Select File To Encrypt</label>
+                    <div style="display: flex; gap: 8px; width: 100%;">
+                        <input type="file" id="encFileInput" class="input-field" accept="image/*,video/*,*/*" style="flex: 1;">
+                        <button type="button" class="delete-file-btn" onclick="clearFile('encFileInput', this)" title="Remove Selected File">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+                                <rect class="dustbin-paper" x="10" y="0" width="4" height="6" rx="1" fill="currentColor" />
+                                <path class="dustbin-body" d="M6,7V19C6,20.1 6.9,21 8,21H16C17.1,21 18,20.1 18,19V7H6ZM10,17H8V9H10V17ZM16,17H14V9H16V17Z" />
+                                <path class="dustbin-lid" d="M15,4V3H9V4H4V6H20V4H15Z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="password-wrapper">
+                        <input type="password" id="encPassword" class="input-field" placeholder="Set Secure Password">
+                        <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('encPassword', this)" title="Show/Hide Password">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <line x1="4" y1="4" x2="20" y2="20" class="eye-slash"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="encMessage" class="answer-capsule"></div>
+            </div>
+
+            <button class="glow-on-hover" id="encBtn" type="button" onclick="encryptFile()">Encrypt & Download</button>
+
+            <div class="caution-pill">
+                ⚠️ Encryption runs locally. Safe for massive videos and high-res photos.
+            </div>
+        </div>
+
+        <div id="decryptPanel" class="panel hidden">
+            <div class="glass-panel">
+                <div class="input-group">
+                    <label for="decFileInput">Select Encrypted File</label>
+                    <div style="display: flex; gap: 8px; width: 100%;">
+                        <input type="file" id="decFileInput" class="input-field" accept="image/*,video/*,*/*" style="flex: 1;">
+                        <button type="button" class="delete-file-btn" onclick="clearFile('decFileInput', this)" title="Remove Selected File">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+                                <rect class="dustbin-paper" x="10" y="0" width="4" height="6" rx="1" fill="currentColor" />
+                                <path class="dustbin-body" d="M6,7V19C6,20.1 6.9,21 8,21H16C17.1,21 18,20.1 18,19V7H6ZM10,17H8V9H10V17ZM16,17H14V9H16V17Z" />
+                                <path class="dustbin-lid" d="M15,4V3H9V4H4V6H20V4H15Z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="password-wrapper">
+                        <input type="password" id="decPassword" class="input-field" placeholder="Enter password">
+                        <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('decPassword', this)" title="Show/Hide Password">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <line x1="4" y1="4" x2="20" y2="20" class="eye-slash"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="decMessage" class="answer-capsule"></div>
+            </div>
+
+            <button class="glow-on-hover" id="decBtn" type="button" onclick="decryptFile()">Decrypt & Unlock</button>
+
+            <div class="caution-pill">
+                ⚠️ Provide the exact matching password to successfully unlock the file.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modalContainer" class="modal-overlay" onclick="handleOutsideClick(event)">
+    <div id="saveModal" class="modal-box">
+        <h3>Save Options</h3>
+        <button class="glass-btn" onclick="copyToClipboard()">📋 Copy Text</button>
+        <button class="glass-btn" onclick="downloadFile()">📄 Save as File</button>
+        <button class="close-btn" onclick="closeModals()">Cancel</button>
+    </div>
+
+    <div id="shareModal" class="modal-box">
+        <h3>Share Via</h3>
+        <button class="glass-btn" onclick="shareTo('whatsapp')" style="border-color:#25D366; color:#25D366;">💬 WhatsApp</button>
+        <button class="glass-btn" onclick="shareTo('facebook')" style="border-color:#1877F2; color:#1877F2;">📘 Facebook</button>
+        <button class="glass-btn" onclick="shareTo('messenger')" style="border-color:#A334FA; color:#A334FA;">⚡ Messenger</button>
+        <button class="close-btn" onclick="closeModals()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    /* ================= SMOOTH MAIN NAVIGATION CONTROLLER ================= */
+    let isTransitioning = false; // Lock to prevent buggy multiple clicks during transition
+
+    // Height calculation engine to stop layout jumps (snapping fix)
+    function smoothHeightTransition(callback) {
+        const container = document.querySelector('.main-container');
+        
+        // Lock to current hardcoded height instantly
+        const startHeight = container.getBoundingClientRect().height;
+        container.style.height = startHeight + 'px';
+        
+        // --- Added overflow: hidden here to prevent internal content spilling & shaking ---
+        container.style.overflow = 'hidden'; 
+        container.style.transition = 'height 0.25s cubic-bezier(0.25, 1, 0.5, 1)';
+        
+        // Execute the DOM change (swapping hidden tools)
+        callback();
+        
+        // Measure the natural destination height
+        container.style.height = 'auto'; 
+        const endHeight = container.getBoundingClientRect().height;
+        
+        // Revert to start and force browser to repaint
+        container.style.height = startHeight + 'px';
+        void container.offsetHeight; 
+        
+        // Command to slide to the destination height smoothly
+        container.style.height = endHeight + 'px';
+        
+        // Cleanup after slide completes
+        setTimeout(() => {
+            container.style.height = 'auto';
+            container.style.transition = 'none';
+            // --- Restored standard overflow after transition completes ---
+            container.style.overflow = 'visible'; 
+        }, 260);
+    }
+
+    function switchMainTool(targetTool) {
+        const panels = {
+            'calc': { el: document.getElementById('calcToolPanel'), tab: document.getElementById('tab-calc'), title: 'Calculator' },
+            'morse': { el: document.getElementById('morseToolPanel'), tab: document.getElementById('tab-morse'), title: 'Morse Code' },
+            'vault': { el: document.getElementById('vaultToolPanel'), tab: document.getElementById('tab-vault'), title: 'Secure Vault' }
+        };
+
+        let currentActiveKey = null;
+        for (const key in panels) {
+            if (!panels[key].el.classList.contains('hidden')) {
+                currentActiveKey = key;
+            }
+        }
+
+        if (currentActiveKey === targetTool) return; // Already on selected panel
+        if (isTransitioning) return; // Wait for current animation
+        isTransitioning = true;
+
+        const currentPanel = panels[currentActiveKey];
+        const nextPanel = panels[targetTool];
+        const titleEl = document.getElementById('masterAppTitle');
+
+        // Initial panel fade out
+        currentPanel.el.style.opacity = '0';
+        currentPanel.el.style.transform = 'translateY(-10px) scale(0.98)';
+
+        // Title fast hide/scale animation
+        titleEl.style.opacity = '0';
+        titleEl.style.transform = 'translateY(-10px) scale(0.9)';
+
+        setTimeout(() => {
+            smoothHeightTransition(() => {
+                currentPanel.el.classList.add('hidden');
+                currentPanel.tab.classList.remove('active-tool-tab');
+
+                nextPanel.el.classList.remove('hidden');
+                nextPanel.tab.classList.add('active-tool-tab');
+                
+                // Swap text securely when opacity is exactly 0
+                titleEl.textContent = nextPanel.title;
+                
+                nextPanel.el.style.opacity = '0';
+                nextPanel.el.style.transform = 'translateY(15px) scale(0.98)';
+                
+                void nextPanel.el.offsetWidth; // Reflow push
+                
+                // Blast the new title and tool panel in smoothly
+                titleEl.style.opacity = '1';
+                titleEl.style.transform = 'translateY(0) scale(1)';
+
+                nextPanel.el.style.opacity = '1';
+                nextPanel.el.style.transform = 'translateY(0) scale(1)';
+                
+                if (currentActiveKey === 'morse') stopMorse();
+            });
+
+            // Unlock interactions after full animation pipeline is complete
+            setTimeout(() => {
+                isTransitioning = false;
+            }, 300);
+        }, 150);
+    }
+
+    /* ================= SUB-TAB ENCRYPTION INTERNAL SWITCH ================= */
+    function switchVaultTab() {
+        if (isTransitioning) return;
+        isTransitioning = true;
+
+        const encPanel = document.getElementById('encryptPanel');
+        const decPanel = document.getElementById('decryptPanel');
+        const btn = document.getElementById('vaultTabSwitchBtn');
+        const titleEl = document.getElementById('masterAppTitle');
+
+        const encryptIsActive = !encPanel.classList.contains('hidden');
+        const current = encryptIsActive ? encPanel : decPanel;
+        const next = encryptIsActive ? decPanel : encPanel;
+
+        document.getElementById('encMessage').className = 'answer-capsule';
+        document.getElementById('decMessage').className = 'answer-capsule';
+
+        current.style.opacity = '0';
+        current.style.transform = 'translateY(-10px) scale(0.98)';
+        
+        // Fast Title slide-out animation mapping
+        titleEl.style.opacity = '0';
+        titleEl.style.transform = 'translateY(-10px) scale(0.9)';
+        
+        setTimeout(() => {
+            smoothHeightTransition(() => {
+                current.classList.add('hidden');
+                next.classList.remove('hidden');
+                
+                titleEl.textContent = encryptIsActive ? 'Decrypt Vault' : 'Encrypt Vault';
+                btn.innerHTML = encryptIsActive ? '🔄 Switch to Encrypt Mode' : '🔄 Switch to Decrypt Mode';
+
+                next.style.opacity = '0';
+                next.style.transform = 'translateY(15px) scale(0.98)';
+                
+                void next.offsetWidth; // Reflow push
+                
+                // Fast Title slide-in animation mapping
+                titleEl.style.opacity = '1';
+                titleEl.style.transform = 'translateY(0) scale(1)';
+
+                next.style.opacity = '1';
+                next.style.transform = 'translateY(0) scale(1)';
+            });
+
+            setTimeout(() => {
+                isTransitioning = false;
+            }, 300);
+        }, 150);
+    }
+
+    /* ================= PASSWORD VISIBILITY TOGGLE ENGINE ================= */
+    function togglePasswordVisibility(inputId, btnElement) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            btnElement.classList.add('password-visible');
+        } else {
+            input.type = 'password';
+            btnElement.classList.remove('password-visible');
+        }
+    }
+
+    // Interactive input clean handler mappings
+    document.querySelectorAll('.input-field').forEach(input => {
+        input.addEventListener('input', () => {
+            document.getElementById('encMessage').className = 'answer-capsule';
+            document.getElementById('decMessage').className = 'answer-capsule';
+        });
+    });
+
+    function showMessage(id, text, isError) {
+        const el = document.getElementById(id);
+        el.innerHTML = text;
+        el.className = `answer-capsule show ${isError ? 'red-text' : 'green-text'}`;
+    }
+</script>
+
+<script>
+    /* ================= CALCULATOR ENGINE MOTOR ================= */
+    const inputField = document.getElementById('equationInput');
+    const answerBox = document.getElementById('answerBox');
+
+    inputField.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') executeCalculation();
+    });
+
+    inputField.addEventListener('input', function() {
+        if (inputField.value.trim() === "") answerBox.className = "answer-capsule";
+    });
+
+    // Added Logic for Calculator Clear Button
+    function clearEquation(btnElement) {
+        const inputField = document.getElementById('equationInput');
+        if (inputField.value.trim() !== "") {
+            btnElement.classList.add('is-dumping');
+            setTimeout(() => {
+                inputField.value = '';
+                answerBox.className = "answer-capsule";
+                btnElement.classList.remove('is-dumping');
+            }, 600);
+        } else {
+            btnElement.classList.add('is-empty-shake');
+            setTimeout(() => {
+                btnElement.classList.remove('is-empty-shake');
+            }, 300);
+        }
+    }
+
+    function executeCalculation() {
+        let rawInput = inputField.value;
+        if (!rawInput.trim()) {
+            answerBox.className = "answer-capsule";
+            return;
+        }
+
+        let processedInput = rawInput.replace(/\{/g, '(').replace(/\}/g, ')');
+        processedInput = processedInput.replace(/\[/g, '(').replace(/\]/g, ')');
+        let sanitizedInput = processedInput.replace(/×/g, '*').replace(/÷/g, '/');
+
+        sanitizedInput = sanitizedInput.replace(/(\d)\s*\(/g, '$1*(');
+        sanitizedInput = sanitizedInput.replace(/\)\s*(\d)/g, ')*$1');
+        sanitizedInput = sanitizedInput.replace(/\)\s*\(/g, ')*(');
+
+        try {
+            if (/[^0-9+\-*/().\s]/g.test(sanitizedInput)) throw new Error();
+            let result = eval(sanitizedInput);
+
+            if (result === undefined || isNaN(result) || !isFinite(result)) throw new Error();
+            if (result % 1 !== 0) result = parseFloat(result.toFixed(4));
+
+            answerBox.innerHTML = `Answer: ${result}`;
+            answerBox.className = "answer-capsule green-text show";
+        } catch (error) {
+            answerBox.innerHTML = `Error: Invalid Equation!`;
+            answerBox.className = "answer-capsule red-text show";
+        }
+    }
+</script>
+
+<script>
+    /* ================= MORSE TRANSLATOR ENGINE MOTOR ================= */
+    const morseMap = {
+        'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-', 'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': '/'
+    };
+
+    const reverseMorseMap = {};
+    for (const key in morseMap) reverseMorseMap[morseMap[key]] = key;
+
+    let audioCtx = null;
+    let playbackState = 'stopped';
+
+    const appState = { isRepeating: false, isSoundOn: true, isVibrateOn: false };
+
+    function openModal(modalId) {
+        document.getElementById('modalContainer').classList.add('show');
+        document.querySelectorAll('.modal-box').forEach(box => box.classList.remove('active'));
+        document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModals() {
+        document.getElementById('modalContainer').classList.remove('show');
+        document.querySelectorAll('.modal-box').forEach(box => box.classList.remove('active'));
+    }
+
+    function handleOutsideClick(event) {
+        if (event.target.id === 'modalContainer') closeModals();
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById('morseOutput').value;
+        if (!text) return alert("Nothing to copy!");
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Copied to clipboard!");
+            closeModals();
+        });
+    }
+
+    function downloadFile() {
+        const input = document.getElementById('textInput').value;
+        const output = document.getElementById('morseOutput').value;
+        if (!output) return alert("Nothing to save!");
+
+        const fileContent = `Original Text:\n${input}\n\nMorse Code:\n${output}`;
+        const blob = new Blob([fileContent], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Morse_Translation.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        closeModals();
+    }
+
+    function shareTo(platform) {
+        let textToShare = document.getElementById('morseOutput').value;
+        if (!textToShare) textToShare = "Check out this Morse Code Translator!";
+        else textToShare = "Here is my Morse Code translation:\n" + textToShare;
+
+        const encodedText = encodeURIComponent(textToShare);
+        const dummyUrl = encodeURIComponent("https://google.com");
+
+        if (platform === 'whatsapp') {
+            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+        } else if (platform === 'facebook') {
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${dummyUrl}&quote=${encodedText}`, '_blank');
+        } else if (platform === 'messenger') {
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                window.location.href = `fb-messenger://share/?link=${dummyUrl}`;
+            } else {
+                window.open(`http://www.facebook.com/dialog/send?link=${dummyUrl}&app_id=291494419107518&redirect_uri=${dummyUrl}`, '_blank');
+            }
+        }
+        closeModals();
+    }
+
+    function updateSliders() {
+        document.getElementById('speedLabel').innerText = `Speed (${document.getElementById('speed').value})`;
+        document.getElementById('pitchLabel').innerText = `Pitch (${document.getElementById('pitch').value})`;
+        document.getElementById('volumeLabel').innerText = `Volume (${document.getElementById('volume').value})`;
+    }
+
+    function toggleBtn(btnId, stateKey) {
+        appState[stateKey] = !appState[stateKey];
+        let btn = document.getElementById(btnId);
+        if (appState[stateKey]) btn.classList.add('active-toggle');
+        else btn.classList.remove('active-toggle');
+    }
+
+    function translateToMorse() {
+        const input = document.getElementById('textInput').value.toUpperCase();
+        let result = '';
+        for (let i = 0; i < input.length; i++) {
+            if (morseMap[input[i]]) result += morseMap[input[i]] + ' ';
+            else if (input[i] === '\n') result += '\n';
+        }
+        document.getElementById('morseOutput').value = result.trim();
+    }
+
+    function translateToText() {
+        const input = document.getElementById('morseOutput').value;
+        const lines = input.split('\n');
+        const translatedLines = lines.map(line => {
+            const tokens = line.trim().split(' ');
+            return tokens.map(token => {
+                if (reverseMorseMap[token]) return reverseMorseMap[token];
+                return '';
+            }).join('');
+        });
+        document.getElementById('textInput').value = translatedLines.join('\n');
+    }
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function pauseMorse() {
+        if (playbackState === 'playing') playbackState = 'paused';
+        else if (playbackState === 'paused') playbackState = 'playing';
+    }
+
+    function stopMorse() { playbackState = 'stopped'; }
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function playBeep(duration) {
+        return new Promise(resolve => {
+            let freq = parseInt(document.getElementById('pitch').value);
+            let vol = parseInt(document.getElementById('volume').value) / 100;
+
+            if (appState.isVibrateOn && 'vibrate' in navigator) navigator.vibrate(duration);
+
+            if (appState.isSoundOn) {
+                initAudio();
+                let osc = audioCtx.createOscillator();
+                let gainNode = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gainNode.gain.value = vol;
+
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+
+                setTimeout(() => {
+                    osc.stop();
+                    resolve();
+                }, duration);
+            } else {
+                setTimeout(() => { resolve(); }, duration);
+            }
+        });
+    }
+
+    async function playMorse() {
+        if (playbackState === 'playing' || playbackState === 'paused') return;
+
+        let text = document.getElementById('morseOutput').value;
+        if (!text) return;
+
+        initAudio();
+        playbackState = 'playing';
+
+        do {
+            let speedWPM = parseInt(document.getElementById('speed').value);
+            let dotMs = 1200 / speedWPM;
+
+            for (let i = 0; i < text.length; i++) {
+                if (playbackState === 'stopped') break;
+
+                while (playbackState === 'paused') {
+                    await sleep(100);
+                    if (playbackState === 'stopped') break;
+                }
+
+                let char = text[i];
+                if (char === '.') {
+                    await playBeep(dotMs);
+                    await sleep(dotMs);
+                } else if (char === '-') {
+                    await playBeep(dotMs * 3);
+                    await sleep(dotMs);
+                } else if (char === ' ') {
+                    await sleep(dotMs * 2);
+                } else if (char === '/') {
+                    await sleep(dotMs * 6);
+                }
+            }
+
+            if (playbackState === 'stopped' || !appState.isRepeating) break;
+            else await sleep(dotMs * 7);
+
+        } while (true);
+
+        playbackState = 'stopped';
+    }
+</script>
+
+<script>
+    /* ================= AES-GCM VAULT ENCRYPTION ENGINE ================= */
+    async function getKey(password) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+        return await crypto.subtle.deriveKey(
+            { name: "PBKDF2", salt: enc.encode("secure-vault-v3"), iterations: 100000, hash: "SHA-256" },
+            keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+        );
+    }
+
+    function clearFile(inputId, btnElement) {
+        const fileInput = document.getElementById(inputId);
+        if (fileInput) {
+            if (fileInput.value) {
+                btnElement.classList.add('is-dumping');
+                setTimeout(() => {
+                    fileInput.value = '';
+                    const msgId = inputId === 'encFileInput' ? 'encMessage' : 'decMessage';
+                    document.getElementById(msgId).className = 'answer-capsule';
+                    btnElement.classList.remove('is-dumping'); 
+                }, 600);
+            } else {
+                btnElement.classList.add('is-empty-shake');
+                setTimeout(() => {
+                    btnElement.classList.remove('is-empty-shake');
+                }, 300);
+            }
+        }
+    }
+
+    async function encryptFile() {
+        const fileSelector = document.getElementById('encFileInput');
+        const passwordField = document.getElementById('encPassword');
+        const button = document.getElementById('encBtn');
+
+        const file = fileSelector.files[0];
+        const password = passwordField.value;
+
+        if(!file || !password) return showMessage('encMessage', 'Error: Please provide a file and password.', true);
+
+        button.innerText = "Processing...";
+        button.disabled = true;
+        showMessage('encMessage', 'Encrypting... Please wait.', false);
+
+        try {
+            const key = await getKey(password);
+            const chunkSize = 1024 * 1024 * 10; 
+            let offset = 0;
+            const finalChunks = [];
+
+            while (offset < file.size) {
+                const chunk = file.slice(offset, offset + chunkSize);
+                const buffer = await chunk.arrayBuffer();
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
+                
+                finalChunks.push(iv);
+                finalChunks.push(new Uint8Array(encrypted));
+                offset += chunkSize;
+            }
+
+            const blob = new Blob(finalChunks, { type: "application/octet-stream" });
+            const downloadLink = document.createElement("a");
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = file.name + ".enc";
+            downloadLink.click();
+            
+            showMessage('encMessage', 'Success! File Encrypted.', false);
+        } catch (err) {
+            console.error(err);
+            showMessage('encMessage', 'Error processing file!', true);
+        } finally {
+            button.innerText = "Encrypt & Download";
+            button.disabled = false;
+        }
+    }
+
+    async function decryptFile() {
+        const fileSelector = document.getElementById('decFileInput');
+        const passwordField = document.getElementById('decPassword');
+        const button = document.getElementById('decBtn');
+
+        const file = fileSelector.files[0];
+        const password = passwordField.value;
+
+        if(!file || !password) return showMessage('decMessage', 'Error: Please provide a file and password.', true);
+
+        button.innerText = "Processing...";
+        button.disabled = true;
+        showMessage('decMessage', 'Decrypting... Please wait.', false);
+
+        try {
+            const key = await getKey(password);
+            const plainChunkSize = 1024 * 1024 * 10;
+            const cipherChunkSize = plainChunkSize + 16; 
+            
+            let offset = 0;
+            const finalChunks = [];
+            const fileSize = file.size;
+
+            while (offset < fileSize) {
+                const ivSlice = file.slice(offset, offset + 12);
+                const iv = new Uint8Array(await ivSlice.arrayBuffer());
+
+                const maxRemaining = fileSize - (offset + 12);
+                const currentCipherSize = Math.min(cipherChunkSize, maxRemaining);
+                
+                const cipherSlice = file.slice(offset + 12, offset + 12 + currentCipherSize);
+                const cipherBuffer = await cipherSlice.arrayBuffer();
+                
+                const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, cipherBuffer);
+                finalChunks.push(new Uint8Array(decrypted));
+
+                offset += 12 + currentCipherSize;
+            }
+
+            let cleanName = file.name;
+            if(cleanName.endsWith('.enc')) cleanName = cleanName.slice(0, -4); 
+            else cleanName = "unlocked_" + cleanName;
+
+            const blob = new Blob(finalChunks, { type: "application/octet-stream" });
+            const downloadLink = document.createElement("a");
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = cleanName;
+            downloadLink.click();
+            
+            showMessage('decMessage', 'Success! File Unlocked.', false);
+        } catch (error) {
+            console.error(error);
+            showMessage('decMessage', 'Error: Incorrect Password or Corrupt File!', true);
+        } finally {
+            button.innerText = "Decrypt & Unlock";
+            button.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>i Tool
+[Multi-Tool (2).html](https://github.com/user-attachments/files/30192604/Multi-Tool.2.html)
